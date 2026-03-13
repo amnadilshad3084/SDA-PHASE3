@@ -1,13 +1,14 @@
 """
-Core owns all protocols. Every module depends on these.
-Nothing outside core is imported here.
+core owns all protocols
+every module depends on these
+nothing outside core is imported here
 """
 from typing import Protocol, List, Dict, Any, runtime_checkable
 
 
 @runtime_checkable
 class DataSink(Protocol):
-    """anything that receives processed results must have write()"""
+    """anything that receives results must have write()"""
     def write(self, data: List[Dict[str, Any]]) -> None: ...
 
 
