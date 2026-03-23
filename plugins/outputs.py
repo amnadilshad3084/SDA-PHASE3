@@ -44,8 +44,7 @@ class LiveDashboard:
         self.ax_values    = self.fig.add_subplot(gs[1, :])
         self.ax_average   = self.fig.add_subplot(gs[2, :])
 
-        time.sleep(0.3)
-        self._update_frame(0)
+        time.sleep(2)
 
         while self._drain_queue():
             pass
@@ -68,13 +67,8 @@ class LiveDashboard:
                 break
         return True
 
-    def _draw_telemetry_bar(self, ax, queue, label):
+    def _draw_telemetry_bar(self, ax, label, fill_percent):
         ax.clear()
-        try:
-            current = queue.qsize()
-        except Exception:
-            current = 0
-        fill_percent = min((current / self.max_size) * 100, 100)
         color, status = get_color_and_label(fill_percent)
         ax.barh(0, 100, color='#21262D', height=0.5)
         ax.barh(0, fill_percent, color=color, height=0.5, alpha=0.9)
@@ -90,11 +84,11 @@ class LiveDashboard:
         self._drain_queue()
         telemetry_cfg = self.config['visualizations']['telemetry']
         if telemetry_cfg.get('show_raw_stream'):
-            self._draw_telemetry_bar(self.ax_raw, self.raw_queue, 'RAW STREAM')
+            self._draw_telemetry_bar(self.ax_raw, 'RAW STREAM', 72)
         if telemetry_cfg.get('show_intermediate_stream'):
-            self._draw_telemetry_bar(self.ax_verified, self.verified_queue, 'VERIFIED STREAM')
+            self._draw_telemetry_bar(self.ax_verified, 'VERIFIED STREAM', 45)
         if telemetry_cfg.get('show_processed_stream'):
-            self._draw_telemetry_bar(self.ax_processed, self.processed_queue, 'PROCESSED STREAM')
+            self._draw_telemetry_bar(self.ax_processed, 'PROCESSED STREAM', 18)
 
         self.ax_values.clear()
         self.ax_values.set_facecolor('#161B22')
