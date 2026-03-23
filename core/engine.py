@@ -17,7 +17,6 @@ def generate_signature(raw_value_str: str, key: str, iterations: int) -> str:
     )
     return hash_bytes.hex()
 
-
 def verify_packet_signature(packet: Dict[str, Any], secret_key: str, iterations: int) -> bool:
     raw_value     = packet.get('metric_value', 0)
     attached_sig  = packet.get('security_hash', '')
@@ -113,7 +112,7 @@ class AggregatorWorker:
             except Exception:
                 break
               
-=======
+
 import hashlib
 from typing import Dict, Any, List
 import multiprocessing
@@ -227,5 +226,3 @@ class AggregatorWorker:
                 self.processed_queue.put(result)
             except Exception:
                 break
-            
->>>>>>> ba50487dd04518a3bf7a87778a056670d9e48b85:core.py/engine.py
