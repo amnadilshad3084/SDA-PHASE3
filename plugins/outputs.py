@@ -1,8 +1,8 @@
+import time
 import multiprocessing
 import matplotlib
 matplotlib.use('Agg')
 import matplotlib.pyplot as plt
-from typing import List, Dict, Any
 from collections import deque
 
 
@@ -37,12 +37,15 @@ class LiveDashboard:
         self.fig = plt.figure(figsize=(8, 5), facecolor='#0D1117')
         self.fig.suptitle('LIVE PIPELINE DASHBOARD',
                           fontsize=16, fontweight='bold', color='#58A6FF', y=0.98)
-        gs = self.fig.add_gridspec(3, 3, hspace=0.5, wspace=0.3, top=0.93, bottom=0.07)
+        gs = self.fig.add_gridspec(3, 3, hspace=1.2, wspace=0.4, top=0.88, bottom=0.08)
         self.ax_raw       = self.fig.add_subplot(gs[0, 0])
         self.ax_verified  = self.fig.add_subplot(gs[0, 1])
         self.ax_processed = self.fig.add_subplot(gs[0, 2])
         self.ax_values    = self.fig.add_subplot(gs[1, :])
         self.ax_average   = self.fig.add_subplot(gs[2, :])
+
+        time.sleep(0.3)
+        self._update_frame(0)
 
         while self._drain_queue():
             pass
@@ -102,6 +105,7 @@ class LiveDashboard:
         self.ax_values.set_xlabel('Time Period', fontsize=8, color='#8B949E')
         self.ax_values.set_ylabel('Metric Value', fontsize=8, color='#8B949E')
         self.ax_values.grid(True, alpha=0.2, color='#30363D')
+        self.ax_values.ticklabel_format(style='plain', axis='x')
 
         self.ax_average.clear()
         self.ax_average.set_facecolor('#161B22')
@@ -112,3 +116,4 @@ class LiveDashboard:
         self.ax_average.set_xlabel('Time Period', fontsize=8, color='#8B949E')
         self.ax_average.set_ylabel('Running Average', fontsize=8, color='#8B949E')
         self.ax_average.grid(True, alpha=0.2, color='#30363D')
+        self.ax_average.ticklabel_format(style='plain', axis='x')
