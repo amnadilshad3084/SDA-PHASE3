@@ -111,4 +111,4 @@ class AggregatorWorker:
                 self.processed_queue.put(result)
             except Exception:
                 break
-              
+            
