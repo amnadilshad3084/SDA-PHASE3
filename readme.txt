@@ -1,4 +1,4 @@
-  SDA PHASE 3 --- Generic Concurrent Real-Time Pipeline
+SDA PHASE 3 : Generic Concurrent Real-Time Pipeline
 
 
 MAIN FILE    : main.py
