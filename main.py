@@ -11,7 +11,6 @@ import json
 import multiprocessing
 import sys
 import os
-import os
 os.environ["OPENBLAS_NUM_THREADS"] = "1"
 
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
