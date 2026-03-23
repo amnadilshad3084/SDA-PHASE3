@@ -1,0 +1,84 @@
+@startuml Phase3_Sequence_Diagram
+
+title SDA Phase 3 — Sequence Diagram\nData Flow Through Concurrent Pipeline
+
+skinparam sequenceArrowThickness 2
+skinparam sequenceParticipantBorderColor #495057
+skinparam sequenceParticipantBackgroundColor #F8F9FA
+skinparam sequenceLifeLineBorderColor #6C757D
+
+participant "config.json" as CFG #E2D9F3
+participant "main.py" as MAIN #D4EDDA
+participant "CSVReader" as INPUT #FFF3CD
+participant "raw_queue" as RQ #DDDDFF
+participant "SigWorker x4" as SW #CCE5FF
+participant "verified_queue" as VQ #DDDDFF
+participant "Aggregator" as AGG #CCE5FF
+participant "processed_queue" as PQ #DDDDFF
+participant "LiveDashboard" as DASH #F8D7DA
+participant "TelemetryMonitor" as TEL #FFE8CC
+
+== Bootstrap ==
+MAIN -> CFG : load config.json
+CFG --> MAIN : config dict
+
+MAIN -> RQ : create Queue(maxsize=50)
+MAIN -> VQ : create Queue(maxsize=50)
+MAIN -> PQ : create Queue(maxsize=50)
+
+MAIN -> INPUT : create CSVReader(raw_queue, config)
+MAIN -> SW : create SignatureWorker x4 (raw_queue, verified_queue, config)
+MAIN -> AGG : create AggregatorWorker(verified_queue, processed_queue, config)
+MAIN -> DASH : create LiveDashboard(processed_queue, raw_queue, verified_queue, config)
+MAIN -> TEL : create PipelineTelemetry(all queues, max_size)
+
+== Start All Processes ==
+MAIN -> INPUT : Process.start()
+MAIN -> SW : Process.start() x4 (parallel)
+MAIN -> AGG : Process.start()
+MAIN -> TEL : telemetry.start()
+MAIN -> DASH : dashboard.run()
+
+== Data Flow ==
+loop for each row in CSV
+    INPUT -> RQ : raw_queue.put(packet)
+    note right of INPUT : input_delay_seconds between each row
+end
+
+loop 4 workers in parallel
+    SW -> RQ : raw_queue.get(packet)
+    SW -> SW : verify_packet_signature()
+    alt signature valid
+        SW -> VQ : verified_queue.put(packet)
+    else signature invalid
+        SW -> SW : drop packet
+    end
+end
+
+loop sequential
+    AGG -> VQ : verified_queue.get(packet)
+    AGG -> AGG : update_window()
+    AGG -> AGG : calculate_sliding_average()
+    AGG -> PQ : processed_queue.put(result)
+end
+
+== Dashboard Updates ==
+loop every 100ms
+    TEL -> RQ : poll qsize()
+    TEL -> VQ : poll qsize()
+    TEL -> PQ : poll qsize()
+    TEL -> DASH : notify colors (green/yellow/red)
+    DASH -> PQ : drain processed_queue
+    DASH -> DASH : update line graphs
+    DASH -> DASH : update telemetry bars
+end
+
+== Shutdown ==
+INPUT -> RQ : put(None) x4
+SW -> VQ : put(None) when None received
+AGG -> PQ : put(None) when all workers stopped
+MAIN -> TEL : telemetry.stop()
+MAIN -> SW : process.terminate()
+MAIN -> AGG : process.terminate()
+
+@enduml

@@ -1,0 +1,142 @@
+@startuml Phase3_Class_Diagram
+
+title SDA Phase 3 — Class Diagram\nGeneric Concurrent Real-Time Pipeline
+
+skinparam packageStyle rectangle
+skinparam classBackgroundColor #F8F9FA
+skinparam classBorderColor #495057
+skinparam arrowColor #343A40
+
+package "config.json" #E2D9F3 {
+    class Config {
+        + dataset_path : str
+        + pipeline_dynamics : dict
+        + schema_mapping : dict
+        + processing : dict
+        + visualizations : dict
+    }
+}
+
+package "main.py (Orchestrator)" #D4EDDA {
+    class Main {
+        + load_config() : dict
+        + bootstrap() : void
+    }
+    class Queues {
+        + raw_queue : Queue
+        + verified_queue : Queue
+        + processed_queue : Queue
+    }
+}
+
+package "plugins/inputs.py (Source)" #FFF3CD {
+    class CSVReader {
+        - raw_queue : Queue
+        - config : dict
+        + __init__(raw_queue, config)
+        + run() : void
+    }
+    class cast_value {
+        + cast_value(value, data_type) : Any
+    }
+    class map_row_to_packet {
+        + map_row_to_packet(row, schema) : Dict
+    }
+}
+
+package "core/engine.py (Domain)" #CCE5FF {
+    class SignatureWorker {
+        - worker_id : int
+        - raw_queue : Queue
+        - verified_queue : Queue
+        - config : dict
+        + __init__(worker_id, raw_queue, verified_queue, config)
+        + run() : void
+    }
+    class AggregatorWorker {
+        - verified_queue : Queue
+        - processed_queue : Queue
+        - config : dict
+        - num_workers : int
+        + __init__(verified_queue, processed_queue, config, num_workers)
+        + run() : void
+    }
+    class PureFunctions {
+        + generate_signature(raw_value_str, key, iterations) : str
+        + verify_packet_signature(packet, secret_key, iterations) : bool
+        + calculate_sliding_average(window) : float
+        + update_window(window, new_value, window_size) : List
+    }
+}
+
+package "plugins/outputs.py (Sink)" #F8D7DA {
+    class LiveDashboard {
+        - processed_queue : Queue
+        - raw_queue : Queue
+        - verified_queue : Queue
+        - config : dict
+        - time_values : deque
+        - metric_values : deque
+        - average_values : deque
+        + __init__(processed_queue, raw_queue, verified_queue, config)
+        + run() : void
+        - _drain_queue() : bool
+        - _draw_telemetry_bar(ax, label, fill_percent) : void
+        - _update_frame(frame) : void
+    }
+    class get_color_and_label {
+        + get_color_and_label(fill_percent) : tuple
+    }
+}
+
+package "telemetry/monitor.py (Observer)" #FFE8CC {
+    class PipelineTelemetry {
+        - raw_queue : Queue
+        - verified_queue : Queue
+        - processed_queue : Queue
+        - max_size : int
+        - observers : List
+        - running : bool
+        + __init__(raw_queue, verified_queue, processed_queue, max_size)
+        + subscribe(observer) : void
+        + start() : void
+        + stop() : void
+        - _get_fill_percent(queue) : float
+        - _notify_observers(telemetry) : void
+        - _poll_loop() : void
+    }
+}
+
+' relationships
+Main --> Config : reads
+Main --> Queues : creates
+Main --> CSVReader : creates + injects raw_queue
+Main --> SignatureWorker : creates x4 + injects queues
+Main --> AggregatorWorker : creates + injects queues
+Main --> LiveDashboard : creates + injects queues
+Main --> PipelineTelemetry : creates + starts
+
+CSVReader --> Queues : puts packets into raw_queue
+SignatureWorker --> Queues : reads raw_queue\nputs into verified_queue
+AggregatorWorker --> Queues : reads verified_queue\nputs into processed_queue
+LiveDashboard --> Queues : reads processed_queue
+
+SignatureWorker --> PureFunctions : calls verify_packet_signature()
+AggregatorWorker --> PureFunctions : calls update_window()\ncalculate_sliding_average()
+
+PipelineTelemetry --> Queues : polls qsize()
+PipelineTelemetry --> LiveDashboard : notifies colors
+
+note bottom of Queues
+  Queues handle ALL decoupling
+  No module imports another directly
+  Data flows only through queues
+end note
+
+note bottom of AggregatorWorker
+  Functional Core, Imperative Shell
+  Shell: manages window state
+  Core: pure calculation functions
+end note
+
+@enduml

@@ -1,10 +1,10 @@
 """
-orchestrator - connects everything together
-1. loads config
-2. creates 3 queues
-3. creates all workers
-4. starts everything simultaneously
-5. opens live dashboard
+orchestrator ;this connects everything together
+1.loads config
+2.creates 3 queues
+3.creates all workers
+4.starts everything simultaneously
+5.opens live dashboard
 """
 import json
 import multiprocessing
