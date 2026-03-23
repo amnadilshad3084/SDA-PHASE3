@@ -1,5 +1,4 @@
 """
-main.py
 orchestrator - connects everything together
 1. loads config
 2. creates 3 queues
