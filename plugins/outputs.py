@@ -84,11 +84,11 @@ class LiveDashboard:
         self._drain_queue()
         telemetry_cfg = self.config['visualizations']['telemetry']
         if telemetry_cfg.get('show_raw_stream'):
-            self._draw_telemetry_bar(self.ax_raw, 'RAW STREAM', 72)
+            self._draw_telemetry_bar(self.ax_raw, 'RAW STREAM', 80)
         if telemetry_cfg.get('show_intermediate_stream'):
-            self._draw_telemetry_bar(self.ax_verified, 'VERIFIED STREAM', 45)
+            self._draw_telemetry_bar(self.ax_verified, 'VERIFIED STREAM', 55)
         if telemetry_cfg.get('show_processed_stream'):
-            self._draw_telemetry_bar(self.ax_processed, 'PROCESSED STREAM', 18)
+            self._draw_telemetry_bar(self.ax_processed, 'PROCESSED STREAM', 25)
 
         self.ax_values.clear()
         self.ax_values.set_facecolor('#161B22')
